@@ -1,0 +1,56 @@
+variable "shared_image_version_lookup" {
+  description = <<EOT
+Map of shared_image_version_lookup, attributes below
+Required:
+    - gallery_name
+    - image_name
+    - name
+    - resource_group_name
+Optional:
+    - sort_versions_by_semver
+    - tags
+EOT
+
+  type = map(object({
+    gallery_name            = string
+    image_name              = string
+    name                    = string
+    resource_group_name     = string
+    sort_versions_by_semver = optional(bool)
+    tags                    = optional(map(string))
+  }))
+  validation {
+    condition = alltrue([
+      for k, v in var.shared_image_version_lookup : (
+        length(v.resource_group_name) <= 90
+      )
+    ])
+    error_message = "[from resourcegroups.ValidateName: invalid when len(value) > 90]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.shared_image_version_lookup : (
+        !endswith(v.resource_group_name, ".")
+      )
+    ])
+    error_message = "[from resourcegroups.ValidateName: must not end with \".\"]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.shared_image_version_lookup : (
+        length(v.resource_group_name) != 0
+      )
+    ])
+    error_message = "[from resourcegroups.ValidateName: invalid when len(value) == 0]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.shared_image_version_lookup : (
+        v.tags == null || (length(v.tags) <= 50)
+      )
+    ])
+    error_message = "[from tags.Validate: invalid when len(value) > 50]"
+  }
+  # Note: 9 additional provider-side validators are enforced at apply time but not mirrored as validation{} blocks here (bespoke or non-mechanically-translatable).
+}
+
